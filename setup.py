@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="cadence-client",
-    version="1.0.0-beta1",
-    author="Mohammed Firdaus",
-    author_email="firdaus.halim@gmail.com",
-    description="Python framework for Cadence Workflow Service",
+    name="cadence-python",
+    version="0.0.1rc1",
+    author="Jia Xuyang",
+    author_email="xuyang.jia@gmail.com",
+    description="Python client for uber/cadence",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/firdaus/cadence-python",
+    url="https://github.com/jiaxuyang/cadence-python",
     packages=setuptools.find_packages(exclude=["cadence.tests", "cadence.spikes"]),
     install_requires=[
         "dataclasses-json>=0.3.8",
