@@ -24,12 +24,12 @@ DEFAULT_VERSION = -1
 
 @dataclass
 class ClockDecisionContext:
-    decider: ReplayDecider
-    decision_context: DecisionContext
-    scheduled_timers: Dict[int, OpenRequestInfo] = field(default_factory=dict)
+    decider: "ReplayDecider"
+    decision_context: "DecisionContext"
+    scheduled_timers: "Dict[int, OpenRequestInfo]" = field(default_factory=dict)
     replay_current_time_milliseconds: int = -1
     replaying: bool = True
-    version_handler: MarkerHandler = None
+    version_handler: "MarkerHandler" = None
 
     def __post_init__(self):
         self.version_handler = MarkerHandler(self.decision_context, VERSION_MARKER_NAME)
@@ -40,7 +40,7 @@ class ClockDecisionContext:
     def current_time_millis(self):
         return self.replay_current_time_milliseconds
 
-    def create_timer(self, delay_seconds: int, callback: Callable):
+    def create_timer(self, delay_seconds: int, callback: "Callable"):
         if delay_seconds < 0:
             raise Exception("Negative delay seconds: " + str(delay_seconds))
         if delay_seconds == 0:
@@ -62,8 +62,8 @@ class ClockDecisionContext:
     def set_replaying(self, replaying):
         self.replaying = replaying
 
-    def timer_cancelled(self, start_event_id: int, reason: Exception):
-        scheduled: OpenRequestInfo = self.scheduled_timers.pop(start_event_id, None)
+    def timer_cancelled(self, start_event_id: int, reason: "Exception"):
+        scheduled: "OpenRequestInfo" = self.scheduled_timers.pop(start_event_id, None)
         if not scheduled:
             return
         callback = scheduled.completion_handle
@@ -71,7 +71,7 @@ class ClockDecisionContext:
         exception.init_cause(reason)
         callback(None, exception)
 
-    def handle_timer_fired(self, attributes: TimerFiredEventAttributes):
+    def handle_timer_fired(self, attributes: "TimerFiredEventAttributes"):
         started_event_id: int = attributes.started_event_id
         if self.decider.handle_timer_closed(attributes):
             scheduled = self.scheduled_timers.pop(started_event_id, None)
@@ -79,8 +79,8 @@ class ClockDecisionContext:
                 callback = scheduled.completion_handle
                 callback(None, None)
 
-    def handle_timer_canceled(self, event: HistoryEvent):
-        attributes: TimerCanceledEventAttributes = event.timer_canceled_event_attributes
+    def handle_timer_canceled(self, event: "HistoryEvent"):
+        attributes: "TimerCanceledEventAttributes" = event.timer_canceled_event_attributes
         started_event_id: int = attributes.started_event_id
         if self.decider.handle_timer_canceled(event):
             self.timer_cancelled(started_event_id, None)
@@ -104,7 +104,7 @@ class ClockDecisionContext:
             raise Exception(f"Version {version} of changeID {change_id} is not supported. "
                             f"Supported version is between {min_supported} and {max_supported}.")
 
-    def handle_marker_recorded(self, event: HistoryEvent):
+    def handle_marker_recorded(self, event: "HistoryEvent"):
         """
         Will be executed more than once for the same event.
         """
@@ -135,9 +135,9 @@ class ClockDecisionContext:
 @dataclass
 class TimerCancellationHandler:
     start_event_id: int
-    clock_decision_context: ClockDecisionContext
+    clock_decision_context: "ClockDecisionContext"
 
-    def accept(self, reason: Exception):
+    def accept(self, reason: "Exception"):
         self.clock_decision_context.decider.cancel_timer(self.start_event_id,
                                                          lambda: self.clock_decision_context.timer_cancelled(
                                                              self.start_event_id, reason))

@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 import asyncio
 import contextvars
@@ -43,7 +43,7 @@ from cadence.workflowservice import WorkflowService
 logger = logging.getLogger(__name__)
 
 
-def is_decision_event(event: HistoryEvent) -> bool:
+def is_decision_event(event: "HistoryEvent") -> bool:
     decision_event_types = (EventType.ActivityTaskScheduled,
                             EventType.StartChildWorkflowExecutionInitiated,
                             EventType.TimerStarted,
@@ -67,7 +67,7 @@ def nano_to_milli(nano):
 
 class HistoryHelper:
 
-    def __init__(self, events: List[HistoryEvent]):
+    def __init__(self, events: "List[HistoryEvent]"):
         self.events = peekable(events)
 
     def has_next(self) -> bool:
@@ -77,16 +77,16 @@ class HistoryHelper:
         except StopIteration:
             return False
 
-    def next(self) -> Optional[DecisionEvents]:
+    def next(self) -> Optional["DecisionEvents"]:
         events = self.events
         if not self.has_next():
             return None
-        decision_events: List[HistoryEvent] = []
-        new_events: List[HistoryEvent] = []
+        decision_events: List["HistoryEvent"] = []
+        new_events: List["HistoryEvent"] = []
         replay = True
         next_decision_event_id = -1
         # noinspection PyUnusedLocal
-        event: HistoryEvent
+        event: "HistoryEvent"
         for event in events:
             event_type = event.event_type
             if event_type == EventType.DecisionTaskStarted or not self.has_next():
@@ -95,7 +95,7 @@ class HistoryHelper:
                     replay = False
                     next_decision_event_id = event.event_id + 2
                     break
-                peeked: HistoryEvent = events.peek()
+                peeked: "HistoryEvent" = events.peek()
                 peeked_type = peeked.event_type
                 if peeked_type == EventType.DecisionTaskTimedOut or peeked_type == EventType.DecisionTaskFailed:
                     continue
@@ -119,19 +119,19 @@ class HistoryHelper:
 
 @dataclass
 class DecisionEvents:
-    events: List[HistoryEvent]
-    decision_events: List[HistoryEvent]
+    events: "List[HistoryEvent]"
+    decision_events: "List[HistoryEvent]"
     replay: bool
     replay_current_time_milliseconds: int
     next_decision_event_id: int
-    markers: List[HistoryEvent] = field(default_factory=list)
+    markers: List["HistoryEvent"] = field(default_factory=list)
 
     def __post_init__(self):
         for event in self.decision_events:
             if event.event_type == EventType.MarkerRecorded:
                 self.markers.append(event)
 
-    def get_optional_decision_event(self, event_id) -> HistoryEvent:
+    def get_optional_decision_event(self, event_id) -> "HistoryEvent":
         index = event_id - self.next_decision_event_id
         if index < 0 or index >= len(self.decision_events):
             return None
@@ -150,10 +150,10 @@ current_task = contextvars.ContextVar("current_task")
 
 @dataclass
 class ITask:
-    decider: ReplayDecider = None
-    task: Task = None
-    status: Status = Status.CREATED
-    awaited: Future = None
+    decider: "ReplayDecider" = None
+    task: "Task" = None
+    status: "Status" = Status.CREATED
+    awaited: "Future" = None
 
     def is_done(self):
         return self.status == Status.DONE
@@ -166,11 +166,11 @@ class ITask:
     def start(self):
         pass
 
-    async def await_till(self, c: Callable, timeout_seconds: int = 0) -> bool:
-        timer_cancellation_handler: TimerCancellationHandler = None
+    async def await_till(self, c: "Callable", timeout_seconds: int = 0) -> bool:
+        timer_cancellation_handler: "TimerCancellationHandler" = None
         timer_fired = False
 
-        def timer_callback(ex: Exception):
+        def timer_callback(ex: "Exception"):
             nonlocal timer_fired
             if not ex:
                 timer_fired = True
@@ -198,16 +198,16 @@ class ITask:
             self.awaited.set_result(None)
 
     @staticmethod
-    def current() -> ITask:
+    def current() -> "ITask":
         return current_task.get()
 
 
 @dataclass
 class WorkflowMethodTask(ITask):
     task_id: str = None
-    workflow_input: List = None
-    worker: Worker = None
-    workflow_type: WorkflowType = None
+    workflow_input: "List" = None
+    worker: "Worker" = None
+    workflow_type: "WorkflowType" = None
     workflow_instance: object = None
     ret_value: object = None
 
@@ -268,8 +268,8 @@ class QueryMethodTask(ITask):
     task_id: str = None
     workflow_instance: object = None
     query_name: str = None
-    query_input: List = None
-    exception_thrown: BaseException = None
+    query_input: "List" = None
+    exception_thrown: "BaseException" = None
     ret_value: object = None
 
     def start(self):
@@ -309,8 +309,8 @@ class SignalMethodTask(ITask):
     task_id: str = None
     workflow_instance: object = None
     signal_name: str = None
-    signal_input: List = None
-    exception_thrown: BaseException = None
+    signal_input: "List" = None
+    exception_thrown: "BaseException" = None
     ret_value: object = None
 
     def start(self):
@@ -348,7 +348,7 @@ class SignalMethodTask(ITask):
 
 @dataclass
 class EventLoopWrapper:
-    event_loop: AbstractEventLoop = None
+    event_loop: "AbstractEventLoop" = None
 
     def __post_init__(self):
         self.event_loop = asyncio.get_event_loop()
@@ -357,22 +357,22 @@ class EventLoopWrapper:
         self.event_loop.call_soon(self.event_loop.stop)
         self.event_loop.run_forever()
 
-    def create_future(self) -> Future[Any]:
+    def create_future(self) -> "Future[Any]":
         return self.event_loop.create_future()
 
 
 @dataclass
 class DecisionContext:
-    decider: ReplayDecider
-    scheduled_activities: Dict[int, Future[bytes]] = field(default_factory=dict)
-    workflow_clock: ClockDecisionContext = None
+    decider: "ReplayDecider"
+    scheduled_activities: "Dict[int, Future[bytes]]" = field(default_factory=dict)
+    workflow_clock: "ClockDecisionContext" = None
     current_run_id: str = None
 
     def __post_init__(self):
         if not self.workflow_clock:
             self.workflow_clock = ClockDecisionContext(self.decider, self)
 
-    async def schedule_activity_task(self, parameters: ExecuteActivityParameters):
+    async def schedule_activity_task(self, parameters: "ExecuteActivityParameters"):
         attr = ScheduleActivityTaskDecisionAttributes()
         attr.activity_type = parameters.activity_type
         attr.input = parameters.input
@@ -414,7 +414,7 @@ class DecisionContext:
     async def schedule_timer(self, seconds: int):
         future = self.decider.event_loop.create_future()
 
-        def callback(ex: Exception):
+        def callback(ex: "Exception"):
             nonlocal future
             if ex:
                 future.set_exception(ex)
@@ -429,7 +429,7 @@ class DecisionContext:
             raise exception
         return
 
-    def handle_activity_task_completed(self, event: HistoryEvent):
+    def handle_activity_task_completed(self, event: "HistoryEvent"):
         attr = event.activity_task_completed_event_attributes
         if self.decider.handle_activity_task_closed(attr.scheduled_event_id):
             future = self.scheduled_activities.get(attr.scheduled_event_id)
@@ -440,7 +440,7 @@ class DecisionContext:
                 raise NonDeterministicWorkflowException(
                     f"Trying to complete activity event {attr.scheduled_event_id} that is not in scheduled_activities")
 
-    def handle_activity_task_failed(self, event: HistoryEvent):
+    def handle_activity_task_failed(self, event: "HistoryEvent"):
         attr = event.activity_task_failed_event_attributes
         if self.decider.handle_activity_task_closed(attr.scheduled_event_id):
             future = self.scheduled_activities.get(attr.scheduled_event_id)
@@ -453,7 +453,7 @@ class DecisionContext:
                 raise NonDeterministicWorkflowException(
                     f"Trying to complete activity event {attr.scheduled_event_id} that is not in scheduled_activities")
 
-    def handle_activity_task_timed_out(self, event: HistoryEvent):
+    def handle_activity_task_timed_out(self, event: "HistoryEvent"):
         attr = event.activity_task_timed_out_event_attributes
         if self.decider.handle_activity_task_closed(attr.scheduled_event_id):
             future = self.scheduled_activities.get(attr.scheduled_event_id)
@@ -465,7 +465,7 @@ class DecisionContext:
                 raise NonDeterministicWorkflowException(
                     f"Trying to complete activity event {attr.scheduled_event_id} that is not in scheduled_activities")
 
-    def create_timer(self, delay_seconds: int, callback: Callable):
+    def create_timer(self, delay_seconds: int, callback: "Callable"):
         return self.workflow_clock.create_timer(delay_seconds, callback)
 
     def set_replay_current_time_milliseconds(self, replay_current_time_milliseconds: int):
@@ -482,10 +482,10 @@ class DecisionContext:
     def is_replaying(self):
         return self.workflow_clock.is_replaying()
 
-    def handle_timer_fired(self, attributes: TimerFiredEventAttributes):
+    def handle_timer_fired(self, attributes: "TimerFiredEventAttributes"):
         self.workflow_clock.handle_timer_fired(attributes)
 
-    def handle_timer_canceled(self, event: HistoryEvent):
+    def handle_timer_canceled(self, event: "HistoryEvent"):
         self.workflow_clock.handle_timer_canceled(event)
 
     def set_current_run_id(self, run_id: str):
@@ -501,7 +501,7 @@ class DecisionContext:
         generator.seed(lsb, version=2)
         return generator
 
-    def record_marker(self, marker_name: str, header: Header, details: bytes):
+    def record_marker(self, marker_name: str, header: "Header", details: bytes):
         marker = RecordMarkerDecisionAttributes()
         marker.marker_name = marker_name
         marker.header = header
@@ -525,32 +525,32 @@ class DecisionContext:
 @dataclass
 class ReplayDecider:
     execution_id: str
-    workflow_type: WorkflowType
-    worker: Worker
-    workflow_task: WorkflowMethodTask = None
-    tasks: List[ITask] = field(default_factory=list)
-    event_loop: EventLoopWrapper = field(default_factory=EventLoopWrapper)
+    workflow_type: "WorkflowType"
+    worker: "Worker"
+    workflow_task: "WorkflowMethodTask" = None
+    tasks: List["ITask"] = field(default_factory=list)
+    event_loop: "EventLoopWrapper" = field(default_factory=EventLoopWrapper)
     completed: bool = False
 
     next_decision_event_id: int = 0
     id_counter: int = 0
-    decision_events: DecisionEvents = None
-    decisions: OrderedDict[DecisionId, DecisionStateMachine] = field(default_factory=OrderedDict)
-    decision_context: DecisionContext = None
+    decision_events: "DecisionEvents" = None
+    decisions: "OrderedDict[DecisionId, DecisionStateMachine]" = field(default_factory=OrderedDict)
+    decision_context: "DecisionContext" = None
 
-    activity_id_to_scheduled_event_id: Dict[str, int] = field(default_factory=dict)
+    activity_id_to_scheduled_event_id: "Dict[str, int]" = field(default_factory=dict)
 
     def __post_init__(self):
         self.decision_context = DecisionContext(decider=self)
 
-    def decide(self, events: List[HistoryEvent]):
+    def decide(self, events: "List[HistoryEvent]"):
         helper = HistoryHelper(events)
         while helper.has_next():
             decision_events = helper.next()
             self.process_decision_events(decision_events)
         return self.get_decisions()
 
-    def process_decision_events(self, decision_events: DecisionEvents):
+    def process_decision_events(self, decision_events: "DecisionEvents"):
         self.decision_context.set_replaying(decision_events.replay)
         self.decision_context.set_replay_current_time_milliseconds(decision_events.replay_current_time_milliseconds)
 
@@ -573,13 +573,13 @@ class ReplayDecider:
         for t in self.tasks:
             t.unblock()
 
-    def process_event(self, event: HistoryEvent):
+    def process_event(self, event: "HistoryEvent"):
         event_handler = event_handlers.get(event.event_type)
         if not event_handler:
             raise Exception(f"No event handler for event type {event.event_type.name}")
         event_handler(self, event)
 
-    def handle_workflow_execution_started(self, event: HistoryEvent):
+    def handle_workflow_execution_started(self, event: "HistoryEvent"):
         start_event_attributes = event.workflow_execution_started_event_attributes
         self.decision_context.set_current_run_id(start_event_attributes.original_execution_run_id)
         if start_event_attributes.input is None or start_event_attributes.input == b'':
@@ -592,7 +592,7 @@ class ReplayDecider:
         assert self.workflow_task.workflow_instance
         self.tasks.append(self.workflow_task)
 
-    def handle_workflow_execution_cancel_requested(self, event: HistoryEvent):
+    def handle_workflow_execution_cancel_requested(self, event: "HistoryEvent"):
         self.cancel_workflow_execution()
 
     def notify_decision_sent(self):
@@ -600,7 +600,7 @@ class ReplayDecider:
             if state_machine.get_decision():
                 state_machine.handle_decision_task_started_event()
 
-    def handle_decision_task_started(self, decision_events: DecisionEvents):
+    def handle_decision_task_started(self, decision_events: "DecisionEvents"):
         self.decision_events = decision_events
         self.next_decision_event_id = decision_events.next_decision_event_id
 
@@ -638,7 +638,7 @@ class ReplayDecider:
         self.add_decision(decision_id, CompleteWorkflowStateMachine(decision_id, decision))
         self.completed = True
 
-    def schedule_activity_task(self, schedule: ScheduleActivityTaskDecisionAttributes) -> int:
+    def schedule_activity_task(self, schedule: "ScheduleActivityTaskDecisionAttributes") -> int:
         # PORT: addAllMissingVersionMarker(false, Optional.empty());
         next_decision_event_id = self.next_decision_event_id
         decision_id = DecisionId(DecisionTarget.ACTIVITY, next_decision_event_id)
@@ -646,35 +646,35 @@ class ReplayDecider:
         self.add_decision(decision_id, ActivityDecisionStateMachine(decision_id, schedule_attributes=schedule))
         return next_decision_event_id
 
-    def complete_signal_execution(self, task: SignalMethodTask):
+    def complete_signal_execution(self, task: "SignalMethodTask"):
         task.destroy()
         self.tasks.remove(task)
 
     def handle_activity_task_closed(self, scheduled_event_id: int) -> bool:
-        decision: DecisionStateMachine = self.get_decision(DecisionId(DecisionTarget.ACTIVITY, scheduled_event_id))
+        decision: "DecisionStateMachine" = self.get_decision(DecisionId(DecisionTarget.ACTIVITY, scheduled_event_id))
         assert decision
         decision.handle_completion_event()
         return decision.is_done()
 
-    def handle_activity_task_scheduled(self, event: HistoryEvent):
+    def handle_activity_task_scheduled(self, event: "HistoryEvent"):
         decision = self.get_decision(DecisionId(DecisionTarget.ACTIVITY, event.event_id))
         decision.handle_initiated_event(event)
 
-    def handle_activity_task_started(self, event: HistoryEvent):
+    def handle_activity_task_started(self, event: "HistoryEvent"):
         attr = event.activity_task_started_event_attributes
         decision = self.get_decision(DecisionId(DecisionTarget.ACTIVITY, attr.scheduled_event_id))
         decision.handle_started_event(event)
 
-    def handle_activity_task_completed(self, event: HistoryEvent):
+    def handle_activity_task_completed(self, event: "HistoryEvent"):
         self.decision_context.handle_activity_task_completed(event)
 
-    def handle_activity_task_failed(self, event: HistoryEvent):
+    def handle_activity_task_failed(self, event: "HistoryEvent"):
         self.decision_context.handle_activity_task_failed(event)
 
-    def handle_activity_task_timed_out(self, event: HistoryEvent):
+    def handle_activity_task_timed_out(self, event: "HistoryEvent"):
         self.decision_context.handle_activity_task_timed_out(event)
 
-    def handle_workflow_execution_signaled(self, event: HistoryEvent):
+    def handle_workflow_execution_signaled(self, event: "HistoryEvent"):
         signaled_event_attributes = event.workflow_execution_signaled_event_attributes
         signal_input = signaled_event_attributes.input
         if not signal_input:
@@ -690,7 +690,7 @@ class ReplayDecider:
         self.tasks.append(task)
         task.start()
 
-    def add_decision(self, decision_id: DecisionId, decision: DecisionStateMachine):
+    def add_decision(self, decision_id: "DecisionId", decision: "DecisionStateMachine"):
         self.decisions[decision_id] = decision
         self.next_decision_event_id += 1
 
@@ -699,8 +699,8 @@ class ReplayDecider:
         self.id_counter += 1
         return ret_value
 
-    def get_decision(self, decision_id: DecisionId) -> DecisionStateMachine:
-        result: DecisionStateMachine = self.decisions.get(decision_id)
+    def get_decision(self, decision_id: "DecisionId") -> "DecisionStateMachine":
+        result: "DecisionStateMachine" = self.decisions.get(decision_id)
         if not result:
             raise NonDeterministicWorkflowException(f"Unknown {decision_id}.")
         return result
@@ -732,52 +732,52 @@ class ReplayDecider:
         if self.workflow_task:
             self.workflow_task.destroy()
 
-    def start_timer(self, request: StartTimerDecisionAttributes):
+    def start_timer(self, request: "StartTimerDecisionAttributes"):
         start_event_id = self.next_decision_event_id
         decision_id = DecisionId(DecisionTarget.TIMER, start_event_id)
         self.add_decision(decision_id, TimerDecisionStateMachine(decision_id, start_timer_attributes=request))
         return start_event_id
 
-    def cancel_timer(self, start_event_id: int, immediate_cancellation_callback: Callable):
-        decision: DecisionStateMachine = self.get_decision(DecisionId(DecisionTarget.TIMER, start_event_id))
+    def cancel_timer(self, start_event_id: int, immediate_cancellation_callback: "Callable"):
+        decision: "DecisionStateMachine" = self.get_decision(DecisionId(DecisionTarget.TIMER, start_event_id))
         if decision.is_done():
             return True
         if decision.cancel(immediate_cancellation_callback):
             self.next_decision_event_id += 1
         return decision.is_done()
 
-    def handle_timer_closed(self, attributes: TimerFiredEventAttributes) -> bool:
+    def handle_timer_closed(self, attributes: "TimerFiredEventAttributes") -> bool:
         decision = self.get_decision(DecisionId(DecisionTarget.TIMER, attributes.started_event_id))
         decision.handle_completion_event()
         return decision.is_done()
 
-    def handle_timer_canceled(self, event: HistoryEvent) -> bool:
+    def handle_timer_canceled(self, event: "HistoryEvent") -> bool:
         attributes = event.timer_canceled_event_attributes
         decision = self.get_decision(DecisionId(DecisionTarget.TIMER, attributes.started_event_id))
         decision.handle_cancellation_event()
         return decision.is_done()
 
-    def handle_cancel_timer_failed(self, event: HistoryEvent) -> bool:
+    def handle_cancel_timer_failed(self, event: "HistoryEvent") -> bool:
         started_event_id = event.event_id
         decision = self.get_decision(DecisionId(DecisionTarget.TIMER, started_event_id))
         decision.handle_cancellation_failure_event(event)
         return decision.is_done()
 
-    def handle_timer_started(self, event: HistoryEvent):
+    def handle_timer_started(self, event: "HistoryEvent"):
         decision = self.get_decision(DecisionId(DecisionTarget.TIMER, event.event_id))
         decision.handle_initiated_event(event)
 
-    def handle_timer_fired(self, event: HistoryEvent):
+    def handle_timer_fired(self, event: "HistoryEvent"):
         attributes = event.timer_fired_event_attributes
         self.decision_context.handle_timer_fired(attributes)
 
-    def handle_marker_recorded(self, event: HistoryEvent):
+    def handle_marker_recorded(self, event: "HistoryEvent"):
         self.decision_context.workflow_clock.handle_marker_recorded(event)
 
-    def get_optional_decision_event(self, event_id: int) -> HistoryEvent:
+    def get_optional_decision_event(self, event_id: int) -> "HistoryEvent":
         return self.decision_events.get_optional_decision_event(event_id)
 
-    def query(self, decision_task: PollForDecisionTaskResponse, query: WorkflowQuery) -> bytes:
+    def query(self, decision_task: "PollForDecisionTaskResponse", query: "WorkflowQuery") -> bytes:
         query_args = query.query_args
         if query_args is None:
             args = []
@@ -805,7 +805,7 @@ def noop(*args):
     pass
 
 
-def on_timer_canceled(self: ReplayDecider, event: HistoryEvent):
+def on_timer_canceled(self: "ReplayDecider", event: "HistoryEvent"):
     self.decision_context.handle_timer_canceled(event)
 
 
@@ -832,9 +832,9 @@ event_handlers = {
 
 @dataclass
 class DecisionTaskLoop:
-    worker: Worker
-    service: WorkflowService = None
-    deciders: Dict[str, ReplayDecider] = field(default_factory=dict)
+    worker: "Worker"
+    service: "WorkflowService" = None
+    deciders: "Dict[str, ReplayDecider]" = field(default_factory=dict)
 
     def __post_init__(self):
         pass
@@ -855,7 +855,7 @@ class DecisionTaskLoop:
                     if self.worker.is_stop_requested():
                         return
                     self.service.set_next_timeout_cb(self.worker.raise_if_stop_requested)
-                    decision_task: PollForDecisionTaskResponse = self.poll()
+                    decision_task: "PollForDecisionTaskResponse" = self.poll()
                     if not decision_task:
                         continue
                     if decision_task.query:
@@ -887,7 +887,7 @@ class DecisionTaskLoop:
             poll_decision_request.task_list.name = self.worker.task_list
             poll_decision_request.domain = self.worker.domain
             # noinspection PyUnusedLocal
-            task: PollForDecisionTaskResponse
+            task: "PollForDecisionTaskResponse"
             task, err = self.service.poll_for_decision_task(poll_decision_request)
             polling_end = datetime.datetime.now()
             logger.debug("PollForDecisionTask: %dms", (polling_end - polling_start).total_seconds() * 1000)
@@ -902,14 +902,14 @@ class DecisionTaskLoop:
             return None
         return task
 
-    def process_task(self, decision_task: PollForDecisionTaskResponse) -> List[Decision]:
+    def process_task(self, decision_task: "PollForDecisionTaskResponse") -> List[Decision]:
         execution_id = str(decision_task.workflow_execution)
         decider = ReplayDecider(execution_id, decision_task.workflow_type, self.worker)
-        decisions: List[Decision] = decider.decide(decision_task.history.events)
+        decisions: List["Decision"] = decider.decide(decision_task.history.events)
         decider.destroy()
         return decisions
 
-    def process_query(self, decision_task: PollForDecisionTaskResponse) -> bytes:
+    def process_query(self, decision_task: "PollForDecisionTaskResponse") -> bytes:
         execution_id = str(decision_task.workflow_execution)
         decider = ReplayDecider(execution_id, decision_task.workflow_type, self.worker)
         decider.decide(decision_task.history.events)
@@ -935,14 +935,14 @@ class DecisionTaskLoop:
         else:
             logger.debug("RespondQueryTaskCompleted successful")
 
-    def respond_decisions(self, task_token: bytes, decisions: List[Decision]):
+    def respond_decisions(self, task_token: bytes, decisions: "List[Decision]"):
         service = self.service
         request = RespondDecisionTaskCompletedRequest()
         request.task_token = task_token
         request.decisions.extend(decisions)
         request.identity = WorkflowService.get_identity()
         # noinspection PyUnusedLocal
-        response: RespondDecisionTaskCompletedResponse
+        response: "RespondDecisionTaskCompletedResponse"
         response, err = service.respond_decision_task_completed(request)
         if err:
             logger.error("Error invoking RespondDecisionTaskCompleted: %s", err)

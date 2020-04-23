@@ -1,10 +1,10 @@
-from __future__ import annotations
+# from __future__ import annotations
 from .ioutils import IOWrapper
 
 
 class KVHeaders:
     @classmethod
-    def read_kv_headers(cls, fp: IOWrapper, len_size, field: str) -> KVHeaders:
+    def read_kv_headers(cls, fp: "IOWrapper", len_size, field: str) -> "KVHeaders":
         if len_size == 2:
             fn = fp.read_short
         elif len_size == 1:
@@ -25,7 +25,7 @@ class KVHeaders:
         self.d = d
         self.len_size = len_size
 
-    def write_headers(self, fp: IOWrapper):
+    def write_headers(self, fp: "IOWrapper"):
         if self.len_size == 2:
             fn = fp.write_short
         elif self.len_size == 1:

@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 import getpass
 import socket
@@ -20,17 +20,17 @@ class FragmentGenerator:
     def get_args(self) -> List[bytes]:
         raise NotImplementedError()
 
-    def get_initial_frame(self) -> FrameWithArgs:
+    def get_initial_frame(self) -> "FrameWithArgs":
         raise NotImplementedError()
 
-    def get_continue_frame(self) -> FrameWithArgs:
+    def get_continue_frame(self) -> "FrameWithArgs":
         raise NotImplementedError()
 
     def build_frames(self, message_id) -> List[FrameWithArgs]:
-        args: List[bytes] = self.get_args()
+        args: "List[bytes]" = self.get_args()
         frames = []
         while args:
-            frame: FrameWithArgs = self.get_initial_frame() if not frames else self.get_continue_frame()
+            frame: "FrameWithArgs" = self.get_initial_frame() if not frames else self.get_continue_frame()
             frame.id = message_id
 
             while args and not frame.is_full():
@@ -79,7 +79,7 @@ class FragmentReader:
                 return a
         return None
 
-    def process_frame(self, frame: Union[FrameWithArgs]):
+    def process_frame(self, frame: "Union[FrameWithArgs]"):
         self.on_load_frame(frame)
         frame_args_offset = 0
         current_arg = self.get_incomplete_arg()
@@ -105,7 +105,7 @@ class FragmentReader:
                 return False
         return True
 
-    def on_load_frame(self, frame: Union[FrameWithArgs]):
+    def on_load_frame(self, frame: "Union[FrameWithArgs]"):
         raise NotImplementedError()
 
     def on_args_complete(self, arg1: bytes, arg2: bytes, arg3: bytes):
@@ -130,9 +130,9 @@ class ThriftArgScheme(FragmentGenerator, FragmentReader):
         self.method_name = str(b, "utf-8")
 
     def process_arg2(self, b):
-        f: BytesIO = BytesIO(b)
-        wrapper: IOWrapper = IOWrapper(f)
-        h: KVHeaders = KVHeaders.read_kv_headers(wrapper, 2, "ThriftFunctionResponse")
+        f: "BytesIO" = BytesIO(b)
+        wrapper: "IOWrapper" = IOWrapper(f)
+        h: "KVHeaders" = KVHeaders.read_kv_headers(wrapper, 2, "ThriftFunctionResponse")
         self.application_headers = h.d
 
     def process_arg3(self, b):
@@ -140,14 +140,14 @@ class ThriftArgScheme(FragmentGenerator, FragmentReader):
 
     def build_arg1(self) -> bytes:
         f = BytesIO()
-        wrapper: IOWrapper = IOWrapper(f)
+        wrapper: "IOWrapper" = IOWrapper(f)
         wrapper.write_string(self.method_name)
         wrapper.flush()
         return f.getvalue()
 
     def build_arg2(self) -> bytes:
         f = BytesIO()
-        wrapper: IOWrapper = IOWrapper(f)
+        wrapper: "IOWrapper" = IOWrapper(f)
         h = KVHeaders(self.application_headers, 2)
         h.write_headers(wrapper)
         return f.getvalue()
@@ -156,17 +156,17 @@ class ThriftArgScheme(FragmentGenerator, FragmentReader):
         return self.thrift_payload
 
     def get_args(self) -> List[bytes]:
-        args: List[bytes] = [self.build_arg1(), self.build_arg2(), self.build_arg3()]
+        args: "List[bytes]" = [self.build_arg1(), self.build_arg2(), self.build_arg3()]
         return args
 
 
 class ThriftFunctionCall(ThriftArgScheme):
 
-    service: Optional[str]
+    service: "Optional[str]"
     method_name: str
     thrift_payload: bytes
-    tchannel_headers: Optional[dict]
-    application_headers: Dict[str, str]
+    tchannel_headers: "Optional[dict]"
+    application_headers: "Dict[str, str]"
     ttl: int
 
     @classmethod
@@ -210,11 +210,11 @@ class ThriftFunctionCall(ThriftArgScheme):
 
     # Functions for frame reading
 
-    def on_load_frame(self, frame: FrameWithArgs):
+    def on_load_frame(self, frame: "FrameWithArgs"):
         if not frame.TYPE == CallReqFrame.TYPE:
             return
         # noinspection PyTypeChecker
-        frame: CallReqFrame = frame
+        frame: "CallReqFrame" = frame
         self.message_id = frame.id
         self.service = frame.service
         self.ttl = frame.ttl
@@ -222,15 +222,15 @@ class ThriftFunctionCall(ThriftArgScheme):
 
     # Functions for frame generation
 
-    def get_initial_frame(self) -> FrameWithArgs:
-        frame: CallReqFrame = CallReqFrame()
+    def get_initial_frame(self) -> "FrameWithArgs":
+        frame: "CallReqFrame" = CallReqFrame()
         frame.ttl = self.ttl
         frame.service = self.service
         frame.headers.d.update(self.tchannel_headers)
         return frame
 
-    def get_continue_frame(self) -> FrameWithArgs:
-        frame: CallReqContinueFrame = CallReqContinueFrame()
+    def get_continue_frame(self) -> "FrameWithArgs":
+        frame: "CallReqContinueFrame" = CallReqContinueFrame()
         return frame
 
 
@@ -238,7 +238,7 @@ class ThriftFunctionResponse(ThriftArgScheme):
 
     thrift_payload: bytes
     method_name: str
-    code: Optional[int]
+    code: "Optional[int]"
 
     @classmethod
     def create(cls, code: int, thrift_payload):
@@ -270,36 +270,36 @@ class ThriftFunctionResponse(ThriftArgScheme):
 
     # Functions for frame reading
 
-    def on_load_frame(self, frame: Union[FrameWithArgs]):
+    def on_load_frame(self, frame: "Union[FrameWithArgs]"):
         if not frame.TYPE == CallResFrame.TYPE:
             return
         # noinspection PyTypeChecker
-        frame: CallResFrame = frame
+        frame: "CallResFrame" = frame
         self.message_id = frame.id
         self.code = frame.code
         self.tchannel_headers = frame.headers.d
 
     # Functions for frame generation
 
-    def get_initial_frame(self) -> FrameWithArgs:
-        frame: CallResFrame = CallResFrame()
+    def get_initial_frame(self) -> "FrameWithArgs":
+        frame: "CallResFrame" = CallResFrame()
         frame.code = self.code
         frame.headers.d.update(self.tchannel_headers)
         return frame
 
-    def get_continue_frame(self) -> FrameWithArgs:
-        frame: CallResContinueFrame = CallResContinueFrame()
+    def get_continue_frame(self) -> "FrameWithArgs":
+        frame: "CallResContinueFrame" = CallResContinueFrame()
         return frame
 
 
 class TChannelConnection:
 
-    file: IO
-    wrapper: IOWrapper
+    file: "IO"
+    wrapper: "IOWrapper"
     s: socket.socket
 
     @classmethod
-    def open(cls, host: object, port: object, timeout: int = None) -> TChannelConnection:
+    def open(cls, host: object, port: object, timeout: int = None) -> "TChannelConnection":
         s: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(timeout)
         s.connect((host, port))
@@ -313,7 +313,7 @@ class TChannelConnection:
 
         self.handshake()
 
-    def set_next_timeout_cb(self, cb: Callable):
+    def set_next_timeout_cb(self, cb: "Callable"):
         self.wrapper.set_next_timeout_cb(cb)
 
     def new_id(self):
@@ -321,7 +321,7 @@ class TChannelConnection:
         return self.current_id
 
     def handshake(self):
-        req: InitReqFrame = InitReqFrame()
+        req: "InitReqFrame" = InitReqFrame()
         req.id = self.new_id()
         req.headers.d["host_port"] = "0.0.0.0:0"
         req.headers.d["process_name"] = "python-process"
@@ -331,7 +331,7 @@ class TChannelConnection:
         if res.TYPE != 0x02:
             raise Exception("Unexpected response from server")
 
-    def write_frame(self, frame: Frame):
+    def write_frame(self, frame: "Frame"):
         frame.write(self.wrapper)
         self.wrapper.flush()
 
@@ -345,7 +345,7 @@ class TChannelConnection:
         self.s.close()
         self.wrapper.close()
 
-    def call_function(self, call: ThriftFunctionCall) -> ThriftFunctionResponse:
+    def call_function(self, call: "ThriftFunctionCall") -> "ThriftFunctionResponse":
         frames = call.build_frames(self.new_id())
         for frame in frames:
             self.write_frame(frame)

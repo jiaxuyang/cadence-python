@@ -8,7 +8,7 @@ from cadence.cadence_types import ActivityType, RetryPolicy
 from cadence.conversions import args_to_json
 
 
-def get_activity_method_name(method: Callable):
+def get_activity_method_name(method: "Callable"):
     return "::".join(method.__qualname__.split(".")[-2:])
 
 
@@ -18,10 +18,10 @@ class RetryParameters:
     backoff_coefficient: float = None
     maximum_interval_in_seconds: int = None
     maximum_attempts: int = None
-    non_retriable_error_reasons: List[str] = field(default_factory=list)
+    non_retriable_error_reasons: "List[str]" = field(default_factory=list)
     expiration_interval_in_seconds: int = None
 
-    def to_retry_policy(self) -> RetryPolicy:
+    def to_retry_policy(self) -> "RetryPolicy":
         policy = RetryPolicy()
         policy.initial_interval_in_seconds = self.initial_interval_in_seconds
         policy.backoff_coefficient = self.backoff_coefficient
@@ -35,20 +35,20 @@ class RetryParameters:
 @dataclass
 class ExecuteActivityParameters:
     activity_id: str = ""
-    activity_type: ActivityType = None
+    activity_type: "ActivityType" = None
     heartbeat_timeout_seconds: int = 0
     input: bytes = None
     schedule_to_close_timeout_seconds: int = 0
     schedule_to_start_timeout_seconds: int = 0
     start_to_close_timeout_seconds: int = 0
     task_list: str = ""
-    retry_parameters: RetryParameters = None
+    retry_parameters: "RetryParameters" = None
 
 
-def activity_method(func: Callable = None, name: str = "", schedule_to_close_timeout_seconds: int = 0,
+def activity_method(func: "Callable" = None, name: str = "", schedule_to_close_timeout_seconds: int = 0,
                     schedule_to_start_timeout_seconds: int = 0, start_to_close_timeout_seconds: int = 0,
-                    heartbeat_timeout_seconds: int = 0, task_list: str = "", retry_parameters: RetryParameters = None):
-    def wrapper(fn: Callable):
+                    heartbeat_timeout_seconds: int = 0, task_list: str = "", retry_parameters: "RetryParameters" = None):
+    def wrapper(fn: "Callable"):
         # noinspection PyProtectedMember
         async def stub_activity_fn(self, *args):
             assert self._decision_context
@@ -58,7 +58,7 @@ def activity_method(func: Callable = None, name: str = "", schedule_to_close_tim
                 parameters.retry_parameters = self._retry_parameters
             parameters.input = args_to_json(args).encode("utf-8")
             from cadence.decision_loop import DecisionContext
-            decision_context: DecisionContext = self._decision_context
+            decision_context: "DecisionContext" = self._decision_context
             return await decision_context.schedule_activity_task(parameters=parameters)
 
         if not task_list:

@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 from typing import Type, Dict, Optional, IO, List
 
@@ -25,7 +25,7 @@ class FrameHeader:
     reserved:8
     """
     @classmethod
-    def read_header(cls, fp: IOWrapper) -> FrameHeader:
+    def read_header(cls, fp: "IOWrapper") -> "FrameHeader":
         size = fp.read_short("header.size")
         payload_type = fp.read_byte("header.payload_type")
         reserved1 = fp.read_byte("header.reserved1")
@@ -43,9 +43,9 @@ class Frame:
     TYPE = None
 
     @staticmethod
-    def read_frame(wrapper: IOWrapper) -> Frame:
-        header: FrameHeader = FrameHeader.read_header(wrapper)
-        frame_types: Dict[int, Type[Frame]] = {
+    def read_frame(wrapper: "IOWrapper") -> "Frame":
+        header: "FrameHeader" = FrameHeader.read_header(wrapper)
+        frame_types: "Dict[int, Type[Frame]]" = {
             0x01: InitReqFrame,
             0x02: InitResFrame,
             0x03: CallReqFrame,
@@ -55,28 +55,28 @@ class Frame:
             0Xff: ErrorFrame
         }
 
-        frame_cls: Optional[Type[Frame]] = frame_types.get(header.payload_type)
+        frame_cls: "Optional[Type[Frame]]" = frame_types.get(header.payload_type)
         if not frame_cls:
             raise NotImplementedError("Payload type: %s " % hex(header.payload_type))
-        frame: Frame = frame_cls()
+        frame: "Frame" = frame_cls()
         frame.read(header, wrapper)
         return frame
 
     def __init__(self):
         self.id = None
 
-    def read(self, header: FrameHeader, fp: IOWrapper):
+    def read(self, header: "FrameHeader", fp: "IOWrapper"):
         self.id = header.id
         self.read_payload(fp, header.size - FRAME_HEADER_SIZE)
 
-    def read_payload(self, fp: IOWrapper, size: int):
+    def read_payload(self, fp: "IOWrapper", size: int):
         raise NotImplementedError()
 
-    def write(self, wrapper: IOWrapper):
+    def write(self, wrapper: "IOWrapper"):
         self.write_header(wrapper)
         self.write_payload(wrapper)
 
-    def write_header(self, fp: IOWrapper):
+    def write_header(self, fp: "IOWrapper"):
         fp.write_short(self.get_size())
         fp.write_byte(self.TYPE)
         fp.write_byte(0)
@@ -89,7 +89,7 @@ class Frame:
     def get_payload_size(self):
         raise NotImplementedError()
 
-    def write_payload(self, fp: IOWrapper):
+    def write_payload(self, fp: "IOWrapper"):
         raise NotImplementedError()
 
     def is_full(self):
@@ -118,14 +118,14 @@ class InitReqFrame(Frame):
         self.headers = KVHeaders(len_size=2)
         self.version = self.VERSION
 
-    def read_payload(self, fp: IOWrapper, size: int):
+    def read_payload(self, fp: "IOWrapper", size: int):
         self.version = fp.read_short("initreq.version")
         self.headers = KVHeaders.read_kv_headers(fp, 2, "initreq.headers")
 
     def get_payload_size(self):
         return 2 + self.headers.size()
 
-    def write_payload(self, fp: IOWrapper):
+    def write_payload(self, fp: "IOWrapper"):
         fp.write_short(self.VERSION)
         self.headers.write_headers(fp)
 
@@ -139,14 +139,14 @@ class InitResFrame(Frame):
         self.headers = KVHeaders(len_size=2)
         self.version = self.VERSION
 
-    def read_payload(self, fp: IOWrapper, size: int):
+    def read_payload(self, fp: "IOWrapper", size: int):
         self.version = fp.read_short("initres.version")
         self.headers = KVHeaders.read_kv_headers(fp, 2, "initres.headers")
 
     def get_payload_size(self):
         return 2 + self.headers.size()
 
-    def write_payload(self, fp: IOWrapper):
+    def write_payload(self, fp: "IOWrapper"):
         fp.write_short(self.VERSION)
         self.headers.write_headers(fp)
 
@@ -154,7 +154,7 @@ class InitResFrame(Frame):
 class Arg:
 
     @classmethod
-    def read_arg(cls, fp: IOWrapper, offset, payload_size, possible_fragment, field):
+    def read_arg(cls, fp: "IOWrapper", offset, payload_size, possible_fragment, field):
         arg_length = fp.read_short(field + ".arg_length")
         offset += 2
         buf = fp.read_bytes(arg_length, field + ".arg")
@@ -176,7 +176,7 @@ class Arg:
     def size(self):
         return 2 + len(self.buf)
 
-    def write_arg(self, fp: IOWrapper):
+    def write_arg(self, fp: "IOWrapper"):
         fp.write_short(len(self.buf))
         fp.write_bytes(self.buf)
 
@@ -209,7 +209,7 @@ class CallFlags:
 
 
 class FrameWithArgs(Frame):
-    args: List[Arg]
+    args: "List[Arg]"
 
     def __init__(self):
         self.args = []
@@ -233,7 +233,7 @@ class CallReqFrame(FrameWithArgs, CallFlags):
         self.csumtype = 0
 
     # noinspection PyPep8
-    def read_payload(self, fp: IOWrapper, size: int):
+    def read_payload(self, fp: "IOWrapper", size: int):
         offset = 0
         self.flags = fp.read_byte("callreq.flags"); offset += 1;
         self.ttl = fp.read_long("callreq.ttl"); offset += 4;
@@ -257,7 +257,7 @@ class CallReqFrame(FrameWithArgs, CallFlags):
                 _.csumtype(1) + sum([arg.size() for arg in self.args]))
 
     # noinspection PyTrailingSemicolon,PyPep8
-    def write_payload(self, fp: IOWrapper):
+    def write_payload(self, fp: "IOWrapper"):
         offset = 0
         fp.write_byte(self.flags); offset += 1;
         fp.write_long(self.ttl); offset += 4;
@@ -288,7 +288,7 @@ class CallResFrame(FrameWithArgs, CallFlags):
         self.csumtype = 0
 
     # noinspection PyPep8
-    def read_payload(self, fp: IOWrapper, size: int):
+    def read_payload(self, fp: "IOWrapper", size: int):
         offset = 0
         self.flags = fp.read_byte("callres.flags"); offset += 1;
         self.code = fp.read_byte("callres.code"); offset += 1;
@@ -310,7 +310,7 @@ class CallResFrame(FrameWithArgs, CallFlags):
                 _.csumtype(1) + sum([arg.size() for arg in self.args]))
 
     # noinspection PyPep8
-    def write_payload(self, fp: IOWrapper):
+    def write_payload(self, fp: "IOWrapper"):
         offset = 0
         fp.write_byte(self.flags); offset += 1;
         fp.write_byte(self.code); offset += 1;
@@ -334,7 +334,7 @@ class FrameContinue(FrameWithArgs, CallFlags):
         self.csumtype = 0
 
     # noinspection PyPep8
-    def read_payload(self, fp: IOWrapper, size: int):
+    def read_payload(self, fp: "IOWrapper", size: int):
         offset = 0
         self.flags = fp.read_byte(self.PREFIX + ".flags"); offset += 1;
         self.csumtype = fp.read_byte(self.PREFIX + ".csumtype"); offset += 1;
@@ -351,7 +351,7 @@ class FrameContinue(FrameWithArgs, CallFlags):
         return _.flag(1) + _.csumtype(1) + sum([arg.size() for arg in self.args])
 
     # noinspection PyPep8
-    def write_payload(self, fp: IOWrapper):
+    def write_payload(self, fp: "IOWrapper"):
         offset = 0
         fp.write_byte(self.flags); offset += 1;
         fp.write_byte(self.csumtype); offset += 1;
@@ -386,7 +386,7 @@ class ErrorFrame(Frame):
         self.tracing = bytes(25)
         self.message = ""
 
-    def read_payload(self, fp: IOWrapper, size: int):
+    def read_payload(self, fp: "IOWrapper", size: int):
         offset = 0
         self.code = fp.read_byte("error.code"); offset += 1;
         self.tracing = fp.read_bytes(25, "error.tracing"); offset += 25;
@@ -397,7 +397,7 @@ class ErrorFrame(Frame):
     def get_payload_size(self):
         return _.code(1) + _.tracing(25) + _.message_len(2) + len(self.message)
 
-    def write_payload(self, fp: IOWrapper):
+    def write_payload(self, fp: "IOWrapper"):
         offset = 0
         fp.write_byte(self.code); offset += 1;
         fp.write_bytes(self.tracing); offset += 25;

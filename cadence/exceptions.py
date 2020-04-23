@@ -22,7 +22,7 @@ class NonDeterministicWorkflowException(BaseException):
 
 class ActivityTaskFailedException(Exception):
 
-    def __init__(self, reason: str, cause: Exception) -> None:
+    def __init__(self, reason: str, cause: "Exception") -> "None":
         super().__init__(reason)
         self.reason = reason
         self.cause = cause
@@ -30,7 +30,7 @@ class ActivityTaskFailedException(Exception):
 
 class ActivityTaskTimeoutException(Exception):
 
-    def __init__(self, event_id: int, timeout_type: TimeoutType, details: bytes, *args: object) -> None:
+    def __init__(self, event_id: int, timeout_type: "TimeoutType", details: bytes, *args: object) -> "None":
         super().__init__(*args)
         self.details = details
         self.timeout_type = timeout_type
@@ -96,7 +96,7 @@ class ActivityFailureException(ActivityException):
 @dataclass
 class WorkflowException(Exception):
     workflow_type: str = None
-    execution: WorkflowExecution = None
+    execution: "WorkflowExecution" = None
 
     def __str__(self):
         return f'{type(self).__name__}: WorkflowType="{self.workflow_type}", ' \
@@ -111,7 +111,7 @@ class WorkflowFailureException(WorkflowException):
 @dataclass
 class QueryFailureException(Exception):
     query_type: str = None
-    execution: WorkflowExecution = None
+    execution: "WorkflowExecution" = None
 
     def __str__(self):
         return f'{type(self).__name__}: QueryType="{self.query_type}", ' \
@@ -120,7 +120,7 @@ class QueryFailureException(Exception):
 
 
 class QueryRejectedException(Exception):
-    close_status: WorkflowExecutionCloseStatus
+    close_status: "WorkflowExecutionCloseStatus"
 
-    def __init__(self, close_status: WorkflowExecutionCloseStatus):
+    def __init__(self, close_status: "WorkflowExecutionCloseStatus"):
         self.close_status = close_status

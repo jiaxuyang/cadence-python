@@ -15,7 +15,7 @@ current_activity_context = contextvars.ContextVar("current_activity_context")
 @dataclass
 class ActivityTask:
     @classmethod
-    def from_poll_for_activity_task_response(cls, task: PollForActivityTaskResponse) -> 'ActivityTask':
+    def from_poll_for_activity_task_response(cls, task: "PollForActivityTaskResponse") -> 'ActivityTask':
         activity_task: 'ActivityTask' = cls()
         activity_task.task_token = task.task_token
         activity_task.workflow_execution = task.workflow_execution
@@ -31,9 +31,9 @@ class ActivityTask:
         return activity_task
 
     task_token: bytes = None
-    workflow_execution: WorkflowExecution = None
+    workflow_execution: "WorkflowExecution" = None
     activity_id: str = None
-    activity_type: ActivityType = None
+    activity_type: "ActivityType" = None
     scheduled_timestamp: int = None
     schedule_to_close_timeout_seconds: int = None
     start_to_close_timeout_seconds: int = None
@@ -43,7 +43,7 @@ class ActivityTask:
     workflow_domain: str = None
 
 
-def heartbeat(service: WorkflowService, task_token: bytes, details: object):
+def heartbeat(service: "WorkflowService", task_token: bytes, details: object):
     request = RecordActivityTaskHeartbeatRequest()
     request.details = json.dumps(details).encode("utf-8")
     request.identity = WorkflowService.get_identity()
@@ -63,8 +63,8 @@ def get_heartbeat_details(heartbeat_details) -> object:
 
 
 class ActivityContext:
-    service: WorkflowService = None
-    activity_task: ActivityTask = None
+    service: "WorkflowService" = None
+    activity_task: "ActivityTask" = None
     domain: str = None
     do_not_complete: bool = False
 
@@ -93,7 +93,7 @@ class Activity:
         return ActivityContext.get().activity_task.task_token
 
     @staticmethod
-    def get_workflow_execution() -> WorkflowExecution:
+    def get_workflow_execution() -> "WorkflowExecution":
         return ActivityContext.get().activity_task.workflow_execution
 
     @staticmethod
@@ -109,7 +109,7 @@ class Activity:
         ActivityContext.get().heartbeat(details)
 
     @staticmethod
-    def get_activity_task() -> ActivityTask:
+    def get_activity_task() -> "ActivityTask":
         return ActivityContext.get().activity_task
 
     @staticmethod
@@ -119,7 +119,7 @@ class Activity:
 
 @dataclass
 class ActivityCompletionClient:
-    service: WorkflowService
+    service: "WorkflowService"
 
     def heartbeat(self, task_token: bytes, details: object):
         heartbeat(self.service, task_token, details)
@@ -129,14 +129,14 @@ class ActivityCompletionClient:
         if error:
             raise error
 
-    def complete_exceptionally(self, task_token: bytes, ex: Exception):
+    def complete_exceptionally(self, task_token: bytes, ex: "Exception"):
         error = complete_exceptionally(self.service, task_token, ex)
         if error:
             raise error
 
 
-def complete_exceptionally(service, task_token, ex: Exception) -> Optional[Exception]:
-    respond: RespondActivityTaskFailedRequest = RespondActivityTaskFailedRequest()
+def complete_exceptionally(service, task_token, ex: "Exception") -> Optional[Exception]:
+    respond: "RespondActivityTaskFailedRequest" = RespondActivityTaskFailedRequest()
     respond.task_token = task_token
     respond.identity = WorkflowService.get_identity()
     respond.reason = "ActivityFailureException"

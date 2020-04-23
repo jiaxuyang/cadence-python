@@ -4,12 +4,12 @@ from typing import IO, Callable
 
 
 class IOWrapper:
-    def __init__(self, io_stream: IO, socket_: socket = None):
+    def __init__(self, io_stream: "IO", socket_: socket = None):
         self.io_stream = io_stream
         self.socket = socket_
         self.next_timeout_cb = None
 
-    def set_next_timeout_cb(self, cb: Callable):
+    def set_next_timeout_cb(self, cb: "Callable"):
         self.next_timeout_cb = cb
 
     def read_or_eof(self, size, field):

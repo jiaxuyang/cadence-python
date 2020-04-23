@@ -26,7 +26,7 @@ class GreetingWorkflowImpl:
 
 
 if __name__ == '__main__':
-    factory = WorkerFactory("localhost", 7933, "sample")
+    factory = WorkerFactory("172.20.0.15", 7933, "hdmap-workflow")
     worker = factory.new_worker("python-tasklist")
     worker.register_workflow_implementation_type(GreetingWorkflowImpl)
     factory.start()

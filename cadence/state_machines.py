@@ -12,10 +12,10 @@ class DecisionStateMachine:
     def get_decision(self) -> Optional[Decision]:
         raise NotImplementedError
 
-    def cancel(self, immediate_cancellation_callback: Callable) -> bool:
+    def cancel(self, immediate_cancellation_callback: "Callable") -> bool:
         raise NotImplementedError
 
-    def handle_started_event(self, event: HistoryEvent):
+    def handle_started_event(self, event: "HistoryEvent"):
         raise NotImplementedError
 
     def handle_cancellation_initiated_event(self):
@@ -24,28 +24,28 @@ class DecisionStateMachine:
     def handle_cancellation_event(self):
         raise NotImplementedError
 
-    def handle_cancellation_failure_event(self, event: HistoryEvent):
+    def handle_cancellation_failure_event(self, event: "HistoryEvent"):
         raise NotImplementedError
 
     def handle_completion_event(self):
         raise NotImplementedError
 
-    def handle_initiation_failed_event(self, event: HistoryEvent):
+    def handle_initiation_failed_event(self, event: "HistoryEvent"):
         raise NotImplementedError
 
-    def handle_initiated_event(self, event: HistoryEvent):
+    def handle_initiated_event(self, event: "HistoryEvent"):
         raise NotImplementedError
 
     def handle_decision_task_started_event(self):
         raise NotImplementedError
 
-    def get_state(self) -> DecisionState:
+    def get_state(self) -> "DecisionState":
         raise NotImplementedError
 
     def is_done(self) -> bool:
         raise NotImplementedError
 
-    def get_id(self) -> DecisionId:
+    def get_id(self) -> "DecisionId":
         raise NotImplementedError
 
 
@@ -56,17 +56,17 @@ class DecisionStateMachineBase(DecisionStateMachine):
     This class has feature parity with the Java version even though it implements parts of features
     not yet implemented in the Python version.
     """
-    id: DecisionId = None
-    state: DecisionState = DecisionState.CREATED
-    state_history: List[str] = field(default_factory=list)
+    id: "DecisionId" = None
+    state: "DecisionState" = DecisionState.CREATED
+    state_history: "List[str]" = field(default_factory=list)
 
     def __post_init__(self):
         self.state_history.append(str(self))
 
-    def get_state(self) -> DecisionState:
+    def get_state(self) -> "DecisionState":
         return self.state
 
-    def get_id(self) -> DecisionId:
+    def get_id(self) -> "DecisionId":
         return self.id
 
     def is_done(self) -> bool:
@@ -81,7 +81,7 @@ class DecisionStateMachineBase(DecisionStateMachine):
         else:
             pass
 
-    def cancel(self, immediate_cancellation_callback: Optional[Callable]) -> bool:
+    def cancel(self, immediate_cancellation_callback: "Optional[Callable]") -> bool:
         self.state_history.append("cancel")
         result = False
         if self.state == DecisionState.CREATED:
@@ -99,7 +99,7 @@ class DecisionStateMachineBase(DecisionStateMachine):
         self.state_history.append(str(self.state))
         return result
 
-    def handle_initiated_event(self, event: HistoryEvent):
+    def handle_initiated_event(self, event: "HistoryEvent"):
         self.state_history.append("handle_initiated_event")
         if self.state == DecisionState.DECISION_SENT:
             self.state = DecisionState.INITIATED
@@ -109,7 +109,7 @@ class DecisionStateMachineBase(DecisionStateMachine):
             self.fail_state_transition()
         self.state_history.append(str(self.state))
 
-    def handle_initiation_failed_event(self, event: HistoryEvent):
+    def handle_initiation_failed_event(self, event: "HistoryEvent"):
         self.state_history.append("handle_initiation_failed_event")
         if self.state in (
                 DecisionState.INITIATED, DecisionState.DECISION_SENT, DecisionState.CANCELED_BEFORE_INITIATED):
@@ -118,7 +118,7 @@ class DecisionStateMachineBase(DecisionStateMachine):
             self.fail_state_transition()
         self.state_history.append(str(self.state))
 
-    def handle_started_event(self, event: HistoryEvent):
+    def handle_started_event(self, event: "HistoryEvent"):
         self.state_history.append("handle_started_event")
 
     def handle_completion_event(self):
@@ -140,7 +140,7 @@ class DecisionStateMachineBase(DecisionStateMachine):
             self.fail_state_transition()
         self.state_history.append(str(self.state))
 
-    def handle_cancellation_failure_event(self, event: HistoryEvent):
+    def handle_cancellation_failure_event(self, event: "HistoryEvent"):
         self.state_history.append("handle_cancellation_failure_event")
         if self.state == DecisionState.COMPLETED_AFTER_CANCELLATION_DECISION_SENT:
             self.state = DecisionState.COMPLETED
@@ -166,7 +166,7 @@ class ActivityDecisionStateMachine(DecisionStateMachineBase):
     This class has feature parity with the Java version even though it implements parts of features
     not yet implemented in the Python version.
     """
-    schedule_attributes: ScheduleActivityTaskDecisionAttributes = None
+    schedule_attributes: "ScheduleActivityTaskDecisionAttributes" = None
 
     def __post_init__(self):
         if not self.schedule_attributes:
@@ -188,7 +188,7 @@ class ActivityDecisionStateMachine(DecisionStateMachineBase):
         else:
             super().handle_decision_task_started_event()
 
-    def handle_cancellation_failure_event(self, event: HistoryEvent):
+    def handle_cancellation_failure_event(self, event: "HistoryEvent"):
         if self.state == DecisionState.CANCELLATION_DECISION_SENT:
             self.state_history.append("handle_cancellation_failure_event")
             self.state = DecisionState.INITIATED
@@ -214,19 +214,19 @@ class ActivityDecisionStateMachine(DecisionStateMachineBase):
 # noinspection PyAbstractClass
 @dataclass
 class CompleteWorkflowStateMachine(DecisionStateMachine):
-    id: DecisionId
-    decision: Optional[Decision]
+    id: "DecisionId"
+    decision: "Optional[Decision]"
 
-    def get_id(self) -> DecisionId:
+    def get_id(self) -> "DecisionId":
         return self.id
 
     def get_decision(self) -> Optional[Decision]:
         return self.decision
 
-    def handle_initiation_failed_event(self, event: HistoryEvent):
+    def handle_initiation_failed_event(self, event: "HistoryEvent"):
         self.decision = None
 
-    def get_state(self) -> DecisionState:
+    def get_state(self) -> "DecisionState":
         return DecisionState.CREATED
 
     def is_done(self) -> bool:
@@ -239,7 +239,7 @@ class CompleteWorkflowStateMachine(DecisionStateMachine):
 # noinspection PyAbstractClass
 @dataclass
 class TimerDecisionStateMachine(DecisionStateMachineBase):
-    start_timer_attributes: StartTimerDecisionAttributes = None
+    start_timer_attributes: "StartTimerDecisionAttributes" = None
     canceled: bool = False
 
     def __post_init__(self):
@@ -262,7 +262,7 @@ class TimerDecisionStateMachine(DecisionStateMachineBase):
         else:
             super().handle_decision_task_started_event()
 
-    def handle_cancellation_failure_event(self, event: HistoryEvent):
+    def handle_cancellation_failure_event(self, event: "HistoryEvent"):
         if self.state == DecisionState.CANCELLATION_DECISION_SENT:
             self.state_history.append("handle_cancellation_failure_event")
             self.state = DecisionState.INITIATED
@@ -270,7 +270,7 @@ class TimerDecisionStateMachine(DecisionStateMachineBase):
         else:
             super().handle_cancellation_failure_event(event)
 
-    def cancel(self, immediate_cancellation_callback: Optional[Callable]) -> bool:
+    def cancel(self, immediate_cancellation_callback: "Optional[Callable]") -> bool:
         self.canceled = True
         immediate_cancellation_callback()
         return super().cancel(None)
@@ -281,13 +281,13 @@ class TimerDecisionStateMachine(DecisionStateMachineBase):
     def create_cancel_timer_decision(self):
         try_cancel = CancelTimerDecisionAttributes()
         try_cancel.timer_id = self.start_timer_attributes.timer_id
-        decision: Decision = Decision()
+        decision: "Decision" = Decision()
         decision.cancel_timer_decision_attributes = try_cancel
         decision.decision_type = DecisionType.CancelTimer
         return decision
 
     def create_start_timer_decision(self):
-        decision: Decision = Decision()
+        decision: "Decision" = Decision()
         decision.start_timer_decision_attributes = self.start_timer_attributes
         decision.decision_type = DecisionType.StartTimer
         return decision
@@ -295,7 +295,7 @@ class TimerDecisionStateMachine(DecisionStateMachineBase):
 
 @dataclass
 class MarkerDecisionStateMachine(DecisionStateMachineBase):
-    decision: Decision = None
+    decision: "Decision" = None
 
     def get_decision(self) -> Optional[Decision]:
         if self.state == DecisionState.CREATED:

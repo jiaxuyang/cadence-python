@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, LetterCase
@@ -13,7 +13,7 @@ MUTABLE_MARKER_HEADER_KEY = "MutableMarkerHeader"
 
 class MarkerInterface:
     @staticmethod
-    def from_event_attributes(attributes: MarkerRecordedEventAttributes) -> MarkerInterface:
+    def from_event_attributes(attributes: "MarkerRecordedEventAttributes") -> "MarkerInterface":
         if attributes.header and attributes.header.fields and MUTABLE_MARKER_HEADER_KEY in attributes.header.fields:
             buffer = attributes.header.fields.get(MUTABLE_MARKER_HEADER_KEY)
             header = MarkerHeader.from_json(str(buffer, "utf-8"))
@@ -41,15 +41,15 @@ class MarkerHeader:
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class MarkerData(MarkerInterface):
-    header: MarkerHeader = None
+    header: "MarkerHeader" = None
     data: bytes = None
 
     @staticmethod
-    def create(id: str, event_id: int, data: bytes, access_count: int) -> MarkerData:
+    def create(id: str, event_id: int, data: bytes, access_count: int) -> "MarkerData":
         header = MarkerHeader(id=id, event_id=event_id, access_count=access_count)
         return MarkerData(header=header, data=data)
 
-    def get_header(self) -> Header:
+    def get_header(self) -> "Header":
         header_bytes = self.header.to_json().encode("utf-8")
         header = Header()
         header.fields[MUTABLE_MARKER_HEADER_KEY] = header_bytes
@@ -75,9 +75,9 @@ class MarkerResult:
 
 @dataclass
 class MarkerHandler:
-    decision_context: DecisionContext
+    decision_context: "DecisionContext"
     marker_name: str
-    mutable_marker_results: Dict[str, MarkerResult] = field(default_factory=dict)
+    mutable_marker_results: "Dict[str, MarkerResult]" = field(default_factory=dict)
 
     def record_mutable_marker(self, id: str, event_id: int, data: bytes, access_count: int):
         marker = MarkerData.create(id=id, event_id=event_id, data=data, access_count=access_count)
@@ -96,7 +96,7 @@ class MarkerHandler:
 
     def handle(self, id: str, func) -> Optional[bytes]:
         event_id = self.decision_context.decider.next_decision_event_id
-        result: MarkerResult = self.mutable_marker_results.get(id)
+        result: "MarkerResult" = self.mutable_marker_results.get(id)
         if result or self.decision_context.is_replaying():
             if result:
                 if self.decision_context.is_replaying() and not result.replayed:
@@ -119,11 +119,11 @@ class MarkerHandler:
     # Golang client
     def get_marker_data_from_history(self, event_id: int, marker_id: str, expected_access_count: int) -> \
             Optional[bytes]:
-        event: HistoryEvent = self.decision_context.decider.get_optional_decision_event(event_id)
+        event: "HistoryEvent" = self.decision_context.decider.get_optional_decision_event(event_id)
         if not event or event.event_type != EventType.MarkerRecorded:
             return None
 
-        attributes: MarkerRecordedEventAttributes = event.marker_recorded_event_attributes
+        attributes: "MarkerRecordedEventAttributes" = event.marker_recorded_event_attributes
         name = attributes.marker_name
         if self.marker_name != name:
             return None

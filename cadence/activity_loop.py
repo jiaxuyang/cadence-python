@@ -11,8 +11,8 @@ from cadence.worker import Worker, StopRequestedException
 logger = logging.getLogger(__name__)
 
 
-def activity_task_loop(worker: Worker):
-    service: WorkflowService = WorkflowService.create(worker.host, worker.port, timeout=worker.get_timeout())
+def activity_task_loop(worker: "Worker"):
+    service: "WorkflowService" = WorkflowService.create(worker.host, worker.port, timeout=worker.get_timeout())
     worker.manage_service(service)
     logger.info(f"Activity task worker started: {WorkflowService.get_identity()}")
     try:
@@ -30,7 +30,7 @@ def activity_task_loop(worker: Worker):
                 polling_request.identity = WorkflowService.get_identity()
                 polling_request.task_list = TaskList()
                 polling_request.task_list.name = worker.task_list
-                task: PollForActivityTaskResponse
+                task: "PollForActivityTaskResponse"
                 task, err = service.poll_for_activity_task(polling_request)
                 polling_end = datetime.datetime.now()
                 logger.debug("PollForActivityTask: %dms", (polling_end - polling_start).total_seconds() * 1000)

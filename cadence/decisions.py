@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
@@ -31,7 +31,7 @@ class DecisionTarget(Enum):
 
 @dataclass
 class DecisionId:
-    decision_target: DecisionTarget
+    decision_target: "DecisionTarget"
     decision_event_id: int
 
     def __str__(self):
@@ -40,5 +40,5 @@ class DecisionId:
     def __hash__(self):
         return hash(self.__str__())
 
-    def __eq__(self, other: DecisionId):
+    def __eq__(self, other: "DecisionId"):
         return (self.decision_target == other.decision_target) and (self.decision_event_id == other.decision_event_id)

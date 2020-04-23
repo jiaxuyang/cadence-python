@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
@@ -24,9 +24,9 @@ class DomainAlreadyExistsError(Exception):
 
 @dataclass
 class WorkflowExecutionAlreadyStartedError(Exception):
-    message: Optional[str]
-    startRequestId: Optional[str]
-    runId: Optional[str]
+    message: "Optional[str]"
+    startRequestId: "Optional[str]"
+    runId: "Optional[str]"
 
     @property
     def start_request_id(self):
@@ -107,18 +107,18 @@ class ClientVersionNotSupportedError(Exception):
 
 
 CADENCE_ERROR_FIELDS = {
-    "badRequestError": BadRequestError,
-    "internalServiceError": InternalServiceError,
-    "domainExistsError": DomainAlreadyExistsError,
-    "sessionAlreadyExistError": WorkflowExecutionAlreadyStartedError,
-    "entityNotExistError": EntityNotExistsError,
-    "serviceBusyError": ServiceBusyError,
-    "cancellationAlreadyRequestedError": CancellationAlreadyRequestedError,
-    "queryFailedError": QueryFailedError,
-    "domainNotActiveError": DomainNotActiveError,
-    "limitExceededError": LimitExceededError,
-    "workflowAlreadyStartedError": WorkflowExecutionAlreadyStartedError,
-    "clientVersionNotSupportedError": ClientVersionNotSupportedError
+    "badRequestError": "BadRequestError",
+    "internalServiceError": "InternalServiceError",
+    "domainExistsError": "DomainAlreadyExistsError",
+    "sessionAlreadyExistError": "WorkflowExecutionAlreadyStartedError",
+    "entityNotExistError": "EntityNotExistsError",
+    "serviceBusyError": "ServiceBusyError",
+    "cancellationAlreadyRequestedError": "CancellationAlreadyRequestedError",
+    "queryFailedError": "QueryFailedError",
+    "domainNotActiveError": "DomainNotActiveError",
+    "limitExceededError": "LimitExceededError",
+    "workflowAlreadyStartedError": "WorkflowExecutionAlreadyStartedError",
+    "clientVersionNotSupportedError": "ClientVersionNotSupportedError"
 }
 
 IGNORE_FIELDS_IN_ERRORS = ("args", "type_spec", "from_primitive", "to_primitive", "with_traceback")

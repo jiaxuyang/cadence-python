@@ -20,6 +20,7 @@ setuptools.setup(
         "six>=1.12.0",
         "tblib>=1.6.0",
         "thriftrw>=1.7.2",
+        'contextvars;python_version<"3.7"',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

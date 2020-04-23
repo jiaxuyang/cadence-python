@@ -41,17 +41,17 @@ def _find_metadata_field(cls, metadata_field, method_name):
     return None
 
 
-def _get_wm(cls: type, method_name: str) -> WorkflowMethod:
+def _get_wm(cls: type, method_name: str) -> "WorkflowMethod":
     metadata_field = "_workflow_method"
     return _find_metadata_field(cls, metadata_field, method_name)
 
 
-def _get_sm(cls: type, method_name: str) -> SignalMethod:
+def _get_sm(cls: type, method_name: str) -> "SignalMethod":
     metadata_field = "_signal_method"
     return _find_metadata_field(cls, metadata_field, method_name)
 
 
-def _get_qm(cls: type, method_name: str) -> QueryMethod:
+def _get_qm(cls: type, method_name: str) -> "QueryMethod":
     metadata_field = "_query_method"
     return _find_metadata_field(cls, metadata_field, method_name)
 
@@ -62,14 +62,14 @@ class Worker:
     port: int = None
     domain: str = None
     task_list: str = None
-    options: WorkerOptions = None
-    activities: Dict[str, Callable] = field(default_factory=dict)
-    workflow_methods: Dict[str, Tuple[type, Callable]] = field(default_factory=dict)
-    service: WorkflowService = None
+    options: "WorkerOptions" = None
+    activities: "Dict[str, Callable]" = field(default_factory=dict)
+    workflow_methods: "Dict[str, Tuple[type, Callable]]" = field(default_factory=dict)
+    service: "WorkflowService" = None
     threads_started: int = 0
     threads_stopped: int = 0
     stop_requested: bool = False
-    service_instances: List[WorkflowService] = field(default_factory=list)
+    service_instances: List["WorkflowService"] = field(default_factory=list)
     timeout: int = DEFAULT_SOCKET_TIMEOUT_SECONDS
 
     def register_activities_implementation(self, activities_instance: object, activities_cls_name: str = None):
@@ -87,7 +87,7 @@ class Worker:
         if not hasattr(impl_cls, "_query_methods"):
             impl_cls._query_methods = {}
         for method_name, fn in inspect.getmembers(impl_cls, predicate=inspect.isfunction):
-            wm: WorkflowMethod = _get_wm(impl_cls, method_name)
+            wm: "WorkflowMethod" = _get_wm(impl_cls, method_name)
             if wm:
                 impl_fn = getattr(impl_cls, method_name)
                 self.workflow_methods[wm._name] = (impl_cls, impl_fn)
@@ -96,7 +96,7 @@ class Worker:
                     self.workflow_methods[f'{cls_name}::{camel_to_snake(method_name)}'] = (impl_cls, impl_fn)
                     self.workflow_methods[f'{cls_name}::{snake_to_camel(method_name)}'] = (impl_cls, impl_fn)
                 continue
-            sm: SignalMethod = _get_sm(impl_cls, method_name)
+            sm: "SignalMethod" = _get_sm(impl_cls, method_name)
             if sm:
                 impl_fn = getattr(impl_cls, method_name)
                 impl_cls._signal_methods[sm.name] = impl_fn
@@ -105,7 +105,7 @@ class Worker:
                     impl_cls._signal_methods[f'{cls_name}::{camel_to_snake(method_name)}'] = impl_fn
                     impl_cls._signal_methods[f'{cls_name}::{snake_to_camel(method_name)}'] = impl_fn
                 continue
-            qm: QueryMethod = _get_qm(impl_cls, method_name)
+            qm: "QueryMethod" = _get_qm(impl_cls, method_name)
             if qm:
                 impl_fn = getattr(impl_cls, method_name)
                 impl_cls._query_methods[qm.name] = impl_fn
@@ -148,7 +148,7 @@ class Worker:
     def get_workflow_method(self, workflow_type_name: str) -> Tuple[type, Callable]:
         return self.workflow_methods[workflow_type_name]
 
-    def manage_service(self, service: WorkflowService):
+    def manage_service(self, service: "WorkflowService"):
         self.service_instances.append(service)
 
     def set_timeout(self, timeout):

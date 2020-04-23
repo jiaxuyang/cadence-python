@@ -36,23 +36,23 @@ def import_class_from_string(path):
     return klass
 
 
-def serialize_exception(ex: Exception):
+def serialize_exception(ex: "Exception"):
     exception_cls_name: str = exception_class_fqn(ex)
     tb = "".join(traceback.format_exception(type(ex), ex, ex.__traceback__))
     details = json.dumps({
         "class": exception_cls_name,
         "args": ex.args,
         "traceback": tb,
-        "source": THIS_SOURCE
+        "source": "THIS_SOURCE"
     })
     return details
 
 
-def deserialize_exception(details) -> Exception:
+def deserialize_exception(details) -> "Exception":
     """
     TODO: Support built-in types like Exception
     """
-    exception: Exception = None
+    exception: "Exception" = None
     details_dict = json.loads(details)
     source = details_dict.get("source")
     exception_cls_name: str = details_dict.get("class")

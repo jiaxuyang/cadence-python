@@ -14,7 +14,7 @@ ERROR_FATAL = 0x0FF
 
 class TChannelException(Exception):
 
-    def __init__(self, error_frame: ErrorFrame = None):
+    def __init__(self, error_frame: "ErrorFrame" = None):
         self.error_frame = error_frame
 
     def __str__(self):

@@ -12,7 +12,7 @@ TYPE_MAP = {
     'double': 'float'
 }
 
-HEADER = """from __future__ import annotations
+HEADER = """# from __future__ import annotations
 from typing import List, Dict
 from dataclasses import dataclass, field
 from enum import IntEnum
