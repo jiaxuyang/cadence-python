@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="cadence-python",
-    version="0.0.1rc1",
+    version="0.0.1rc2",
     author="Jia Xuyang",
     author_email="xuyang.jia@gmail.com",
     description="Python client for uber/cadence",
