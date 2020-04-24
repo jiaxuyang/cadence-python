@@ -107,18 +107,18 @@ class ClientVersionNotSupportedError(Exception):
 
 
 CADENCE_ERROR_FIELDS = {
-    "badRequestError": "BadRequestError",
-    "internalServiceError": "InternalServiceError",
-    "domainExistsError": "DomainAlreadyExistsError",
-    "sessionAlreadyExistError": "WorkflowExecutionAlreadyStartedError",
-    "entityNotExistError": "EntityNotExistsError",
-    "serviceBusyError": "ServiceBusyError",
-    "cancellationAlreadyRequestedError": "CancellationAlreadyRequestedError",
-    "queryFailedError": "QueryFailedError",
-    "domainNotActiveError": "DomainNotActiveError",
-    "limitExceededError": "LimitExceededError",
-    "workflowAlreadyStartedError": "WorkflowExecutionAlreadyStartedError",
-    "clientVersionNotSupportedError": "ClientVersionNotSupportedError"
+    "badRequestError": BadRequestError,
+    "internalServiceError": InternalServiceError,
+    "domainExistsError": DomainAlreadyExistsError,
+    "sessionAlreadyExistError": WorkflowExecutionAlreadyStartedError,
+    "entityNotExistError": EntityNotExistsError,
+    "serviceBusyError": ServiceBusyError,
+    "cancellationAlreadyRequestedError": CancellationAlreadyRequestedError,
+    "queryFailedError": QueryFailedError,
+    "domainNotActiveError": DomainNotActiveError,
+    "limitExceededError": LimitExceededError,
+    "workflowAlreadyStartedError": WorkflowExecutionAlreadyStartedError,
+    "clientVersionNotSupportedError": ClientVersionNotSupportedError
 }
 
 IGNORE_FIELDS_IN_ERRORS = ("args", "type_spec", "from_primitive", "to_primitive", "with_traceback")
